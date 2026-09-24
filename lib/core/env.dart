@@ -18,9 +18,11 @@ class Env {
     return 'http://127.0.0.1:54321';
   }
 
+  static const _defaultLocalAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+
   static String get supabaseAnonKey {
-    assert(_anonKey.isNotEmpty,
-        'Pass --dart-define=SUPABASE_ANON_KEY=... (see .env.example)');
-    return _anonKey;
+    if (_anonKey.isNotEmpty) return _anonKey;
+    return _defaultLocalAnonKey;
   }
 }

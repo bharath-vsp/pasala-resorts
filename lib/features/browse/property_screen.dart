@@ -83,17 +83,64 @@ class _PropertyGalleryState extends State<PropertyGallery> {
             itemBuilder: (context, i) =>
                 Image.asset(_galleryPhotos[i], fit: BoxFit.cover),
           ),
+          // Top gradient for contrast
           Positioned(
-            top: Spacing.md,
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 80,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.4),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.paddingOf(context).top > 0
+                ? MediaQuery.paddingOf(context).top + 6
+                : Spacing.md,
+            left: Spacing.md,
+            child: Material(
+              color: Colors.white,
+              shape: const CircleBorder(),
+              elevation: 3,
+              shadowColor: Colors.black26,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).maybePop();
+                  } else {
+                    context.go('/');
+                  }
+                },
+                child: const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Icon(Icons.arrow_back, size: 20, color: Color(0xFF101828)),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.paddingOf(context).top > 0
+                ? MediaQuery.paddingOf(context).top + 6
+                : Spacing.md,
             right: Spacing.md,
             child: Container(
               padding: const EdgeInsets.symmetric(
-                horizontal: Spacing.sm,
+                horizontal: Spacing.sm + 2,
                 vertical: Spacing.xs,
               ),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.55),
-                borderRadius: BorderRadius.circular(PasalaTokens.radiusSm),
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: Colors.white24),
               ),
               child: Text(
@@ -188,121 +235,407 @@ class PropertyScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             PropertyGallery(property: p),
-            Padding(
-              padding: const EdgeInsets.all(Spacing.md),
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEDF6F2),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(p.name, style: textTheme.headlineMedium),
-                  if (p.address != null) ...[
-                    const SizedBox(height: Spacing.xs),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(PasalaTokens.radiusSm),
-                      onTap: () async {
-                        final query = Uri.encodeComponent('${p.name}, ${p.address}');
-                        final mapsUrl = Uri.parse(
-                          'https://www.google.com/maps/search/?api=1&query=$query',
-                        );
-                        if (await canLaunchUrl(mapsUrl)) {
-                          await launchUrl(mapsUrl, mode: LaunchMode.externalApplication);
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.location_on_outlined,
-                                size: 18, color: scheme.primary),
-                            const SizedBox(width: Spacing.xs),
-                            Flexible(
-                              child: Text(
-                                p.address!,
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: scheme.primary,
-                                  decoration: TextDecoration.underline,
-                                  decorationColor:
-                                      scheme.primary.withValues(alpha: 0.4),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: Spacing.xs),
-                            Icon(Icons.open_in_new,
-                                size: 14, color: scheme.primary),
-                          ],
-                        ),
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Spacing.md,
+                      Spacing.lg,
+                      Spacing.md,
+                      Spacing.sm,
                     ),
-                  ],
-                  if (p.description != null) ...[
-                    const SizedBox(height: Spacing.md),
-                    Text(p.description!, style: textTheme.bodyLarge),
-                  ],
-                  const SizedBox(height: Spacing.md),
-                  AmenityWrap(amenities: p.amenities, max: p.amenities.length),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  Spacing.md, 0, Spacing.md, Spacing.lg),
-              child: AsyncView(
-                value: units,
-                onRetry: () => ref.invalidate(unitsProvider(propertyId)),
-                empty: () => const EmptyState(
-                  icon: Icons.bed_outlined,
-                  title: 'No units yet',
-                  message: 'Ask an admin to add one.',
-                ),
-                // Exactly one bookable unit is assumed here -- `.single`
-                // throws if a second unit is ever added, deliberately (see
-                // spec section 7): this screen shows the booking flow
-                // inline for one unit, and does not attempt to fall back
-                // to a unit-picker if that assumption stops holding.
-                data: (list) {
-                  final unit = list.single;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.people_alt_outlined,
-                              size: 18, color: scheme.onSurfaceVariant),
-                          const SizedBox(width: Spacing.xs),
-                          Text.rich(
-                            TextSpan(
-                              style: textTheme.bodyMedium,
-                              children: [
-                                const TextSpan(text: 'Sleeps '),
-                                TextSpan(
-                                  text:
-                                      '${unit.capacityBase}–${unit.capacityMax}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600),
-                                ),
-                                const TextSpan(text: ' Guests'),
-                              ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.name,
+                          style: textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF101828),
+                          ),
+                        ),
+                        if (p.address != null) ...[
+                          const SizedBox(height: Spacing.xs),
+                          InkWell(
+                            borderRadius:
+                                BorderRadius.circular(PasalaTokens.radiusSm),
+                            onTap: () async {
+                              final query =
+                                  Uri.encodeComponent('${p.name}, ${p.address}');
+                              final mapsUrl = Uri.parse(
+                                'https://www.google.com/maps/search/?api=1&query=$query',
+                              );
+                              if (await canLaunchUrl(mapsUrl)) {
+                                await launchUrl(mapsUrl,
+                                    mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.location_on_outlined,
+                                      size: 18, color: scheme.primary),
+                                  const SizedBox(width: Spacing.xs),
+                                  Flexible(
+                                    child: Text(
+                                      p.address!,
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color: scheme.primary,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: scheme.primary
+                                            .withValues(alpha: 0.4),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: Spacing.xs),
+                                  Icon(Icons.open_in_new,
+                                      size: 14, color: scheme.primary),
+                                ],
+                              ),
                             ),
                           ),
                         ],
+                        if (p.description != null) ...[
+                          const SizedBox(height: Spacing.md),
+                          Text(
+                            p.description!,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: const Color(0xFF475467),
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: Spacing.md),
+                        AmenityWrap(
+                            amenities: p.amenities, max: p.amenities.length),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        Spacing.md, 0, Spacing.md, Spacing.lg),
+                    child: AsyncView(
+                      value: units,
+                      onRetry: () => ref.invalidate(unitsProvider(propertyId)),
+                      empty: () => const EmptyState(
+                        icon: Icons.bed_outlined,
+                        title: 'No units yet',
+                        message: 'Ask an admin to add one.',
                       ),
-                      const SizedBox(height: Spacing.lg),
-                      BookingScreen(unitId: unit.id),
-                      const SizedBox(height: Spacing.xl),
-                      const _ExperiencesSection(),
-                      const SizedBox(height: Spacing.xl),
-                      _AboutSection(property: p),
-                      const SizedBox(height: Spacing.lg),
-                      _LocationSection(property: p),
-                      const SizedBox(height: Spacing.lg),
-                      const _ReviewsSection(),
-                    ],
-                  );
-                },
+                      data: (list) {
+                        final unit = list.single;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: Spacing.sm + 4,
+                                vertical: Spacing.xs + 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(999),
+                                border:
+                                    Border.all(color: const Color(0xFFD0D5DD)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.people_alt_outlined,
+                                      size: 16,
+                                      color: scheme.onSurfaceVariant),
+                                  const SizedBox(width: Spacing.xs),
+                                  Text.rich(
+                                    TextSpan(
+                                      style: textTheme.bodyMedium?.copyWith(
+                                        color: const Color(0xFF344054),
+                                      ),
+                                      children: [
+                                        const TextSpan(text: 'Sleeps '),
+                                        TextSpan(
+                                          text:
+                                              '${unit.capacityBase}–${unit.capacityMax}',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w700),
+                                        ),
+                                        const TextSpan(text: ' Guests'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: Spacing.md),
+                            Row(
+                              children: const [
+                                _QuickAmenityTile(
+                                  icon: Icons.wifi,
+                                  title: 'Wi-Fi',
+                                  subtitle: 'High speed',
+                                ),
+                                SizedBox(width: Spacing.sm),
+                                _QuickAmenityTile(
+                                  icon: Icons.free_breakfast_outlined,
+                                  title: 'Breakfast',
+                                  subtitle: 'Included daily',
+                                ),
+                                SizedBox(width: Spacing.sm),
+                                _QuickAmenityTile(
+                                  icon: Icons.local_parking_outlined,
+                                  title: 'Free Parking',
+                                  subtitle: 'On premises',
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: Spacing.md),
+                            _RatePlanCard(unit: unit),
+                            const SizedBox(height: Spacing.lg),
+                            BookingScreen(unitId: unit.id),
+                            const SizedBox(height: Spacing.xl),
+                            const _ExperiencesSection(),
+                            const SizedBox(height: Spacing.xl),
+                            _AboutSection(property: p),
+                            const SizedBox(height: Spacing.lg),
+                            _LocationSection(property: p),
+                            const SizedBox(height: Spacing.lg),
+                            const _ReviewsSection(),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _QuickAmenityTile extends StatelessWidget {
+  const _QuickAmenityTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          vertical: Spacing.sm + 4,
+          horizontal: Spacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(PasalaTokens.radiusMd),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+          border: Border.all(color: const Color(0xFFE4E7EC)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(Spacing.xs + 2),
+              decoration: const BoxDecoration(
+                color: Color(0xFFEDF6F2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 18, color: const Color(0xFF1B4332)),
+            ),
+            const SizedBox(height: Spacing.xs + 2),
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                color: Color(0xFF101828),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 10,
+                color: Color(0xFF667085),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RatePlanCard extends StatelessWidget {
+  const _RatePlanCard({required this.unit});
+
+  final Unit unit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(Spacing.md + 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(PasalaTokens.radiusLg),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFE4E7EC)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.sm,
+                  vertical: Spacing.xs / 2,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'Member Exclusive',
+                  style: TextStyle(
+                    color: Color(0xFF2E7D32),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              const Icon(Icons.bolt, size: 16, color: Colors.amber),
+              const SizedBox(width: 4),
+              const Text(
+                'Instant Book',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF475467),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.sm + 2),
+          const Text(
+            'Book Now, Pay Later',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF101828),
+            ),
+          ),
+          const SizedBox(height: Spacing.xs),
+          Row(
+            children: const [
+              Icon(Icons.check_circle_outline, size: 15, color: Color(0xFF2E7D32)),
+              SizedBox(width: Spacing.xs),
+              Text(
+                'Free cancellation available',
+                style: TextStyle(fontSize: 13, color: Color(0xFF475467)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Row(
+            children: const [
+              Icon(Icons.check_circle_outline, size: 15, color: Color(0xFF2E7D32)),
+              SizedBox(width: Spacing.xs),
+              Text(
+                'Pay at check-in • No upfront deposit',
+                style: TextStyle(fontSize: 13, color: Color(0xFF475467)),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.md),
+          const Divider(height: 1, color: Color(0xFFF2F4F7)),
+          const SizedBox(height: Spacing.sm + 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Rate per night',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF667085)),
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        formatInr(3500),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF101828),
+                        ),
+                      ),
+                      const Text(
+                        ' /night',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF667085)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              FilledButton(
+                onPressed: () {},
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF101828),
+                  foregroundColor: Colors.white,
+                  shape: const StadiumBorder(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.md + 4,
+                    vertical: Spacing.sm + 2,
+                  ),
+                ),
+                child: const Text(
+                  'Book Room',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -6,10 +6,10 @@ import '../../core/theme/app_assets.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/async_view.dart';
 import '../../core/widgets/empty_state.dart';
-import '../../core/widgets/hero_backdrop.dart';
 import '../../core/widgets/loading_state.dart';
 import '../../core/widgets/staggered_fade_in.dart';
 import '../../data/models/property.dart';
+import '../../data/repositories/auth_repository.dart';
 import 'providers.dart';
 
 class BrowseScreen extends ConsumerStatefulWidget {
@@ -25,6 +25,10 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
   @override
   Widget build(BuildContext context) {
     final properties = ref.watch(propertiesProvider);
+    final user = ref.watch(currentUserProvider).value;
+    final firstName = (user?.fullName?.trim().isNotEmpty ?? false)
+        ? user!.fullName!.trim().split(' ').first
+        : 'Guest';
     final wide =
         MediaQuery.sizeOf(context).width >= PasalaTokens.wideBreakpoint;
 
@@ -65,42 +69,175 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(propertiesProvider),
           child: CustomScrollView(
+            cacheExtent: 1000,
             slivers: [
-              SliverToBoxAdapter(child: _BrowseHero(wide: wide)),
-              if (amenityList.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      left: Spacing.md,
-                      right: Spacing.md,
-                      top: Spacing.md,
-                      bottom: Spacing.xs,
-                    ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Spacing.md,
+                    Spacing.sm,
+                    Spacing.md,
+                    Spacing.xs,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Top greeting bar
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          FilterChip(
-                            label: const Text('All'),
-                            selected: _selectedAmenity == null,
-                            onSelected: (_) => setState(() => _selectedAmenity = null),
-                          ),
-                          const SizedBox(width: Spacing.xs),
-                          for (final amenity in amenityList) ...[
-                            FilterChip(
-                              label: Text(amenity),
-                              selected: _selectedAmenity == amenity,
-                              onSelected: (selected) => setState(() {
-                                _selectedAmenity = selected ? amenity : null;
-                              }),
+                          Text(
+                            'Hi, $firstName 👋',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
                             ),
-                            const SizedBox(width: Spacing.xs),
-                          ],
+                          ),
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.black12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.notifications_none_rounded, color: Colors.black87, size: 20),
+                              onPressed: () {},
+                            ),
+                          ),
                         ],
                       ),
+                      const SizedBox(height: Spacing.xs),
+                      // Floating search bar pill
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: Spacing.md, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.search, color: Colors.grey.shade600, size: 20),
+                            const SizedBox(width: Spacing.sm),
+                            Expanded(
+                              child: Text(
+                                'Where do you want to stay?',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              height: 20,
+                              width: 1,
+                              color: Colors.black12,
+                              margin: const EdgeInsets.symmetric(horizontal: Spacing.xs),
+                            ),
+                            Icon(Icons.tune_rounded, color: Colors.black87, size: 18),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: Spacing.xs),
+                      // Hero banner card
+                      _BrowseHero(wide: wide),
+                      const SizedBox(height: Spacing.sm),
+                      // Featured Offers header
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Featured Offers',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {},
+                            child: Text(
+                              'View all',
+                              style: TextStyle(
+                                color: PasalaTokens.seed,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Filter chips row matching middle screen
+              if (amenityList.isNotEmpty)
+                SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    left: Spacing.md,
+                    right: Spacing.md,
+                    bottom: Spacing.sm,
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        ActionChip(
+                          avatar: const Icon(Icons.tune, size: 16),
+                          label: const Text('Filter'),
+                          onPressed: () {},
+                        ),
+                        const SizedBox(width: Spacing.xs),
+                        ActionChip(
+                          avatar: const Icon(Icons.swap_vert, size: 16),
+                          label: const Text('Sort'),
+                          onPressed: () {},
+                        ),
+                        const SizedBox(width: Spacing.xs),
+                        ActionChip(
+                          avatar: const Icon(Icons.attach_money, size: 16),
+                          label: const Text('Price range'),
+                          onPressed: () {},
+                        ),
+                        const SizedBox(width: Spacing.xs),
+                        FilterChip(
+                          label: const Text('All'),
+                          selected: _selectedAmenity == null,
+                          onSelected: (_) => setState(() => _selectedAmenity = null),
+                        ),
+                        const SizedBox(width: Spacing.xs),
+                        for (final amenity in amenityList) ...[
+                          FilterChip(
+                            label: Text(amenity),
+                            selected: _selectedAmenity == amenity,
+                            onSelected: (selected) => setState(() {
+                              _selectedAmenity = selected ? amenity : null;
+                            }),
+                          ),
+                          const SizedBox(width: Spacing.xs),
+                        ],
+                      ],
                     ),
                   ),
                 ),
+              ),
               if (filteredList.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
@@ -156,19 +293,21 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
                 SliverPadding(
                   padding: const EdgeInsets.all(Spacing.md),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: Spacing.md),
-                        child: StaggeredFadeIn(
-                          key: ValueKey(filteredList[i].id),
-                          index: i,
-                          child: PropertyCard(
-                            property: filteredList[i],
-                            onTap: () => context.go('/property/${filteredList[i].id}'),
+                    delegate: SliverChildListDelegate(
+                      [
+                        for (var i = 0; i < filteredList.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: Spacing.md),
+                            child: StaggeredFadeIn(
+                              key: ValueKey(filteredList[i].id),
+                              index: i,
+                              child: PropertyCard(
+                                property: filteredList[i],
+                                onTap: () => context.go('/property/${filteredList[i].id}'),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      childCount: filteredList.length,
+                      ],
                     ),
                   ),
                 ),
@@ -187,28 +326,95 @@ class _BrowseHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      // Taller on wide/web layouts so the hero doesn't look like a thin
-      // strip on a desktop-width browser window (spec section 7).
-      height: wide ? 280 : 200,
-      child: HeroBackdrop(
-        imageAsset: AppAssets.heroDayAerial,
-        scrimOpacity: 0.35,
-        child: const Padding(
-          padding: EdgeInsets.all(Spacing.lg),
-          child: Align(
-            alignment: Alignment.bottomLeft,
-            child: Text(
-              'Discover your stay',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: PasalaTokens.displayWeight,
-                letterSpacing: PasalaTokens.displayLetterSpacing,
+    return Container(
+      height: wide ? 220 : 95,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            AppAssets.patioFirepitNight,
+            fit: BoxFit.cover,
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Colors.black.withValues(alpha: 0.8),
+                  Colors.black.withValues(alpha: 0.35),
+                ],
               ),
             ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.md,
+              vertical: Spacing.xs,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Escape The Ordinary',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Discover your stay',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white54),
+                  ),
+                  child: const Text(
+                    'Explore Now',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -371,7 +577,7 @@ class AmenityWrap extends StatelessWidget {
 /// wall of image on a wide desktop list -- capping the height keeps the card
 /// proportioned like a card instead of a banner while staying 16:9 (or
 /// narrower) on anything phone-sized.
-const double _cardMediaMaxHeight = 220;
+const double _cardMediaMaxHeight = 130;
 
 class PropertyCard extends StatefulWidget {
   const PropertyCard({super.key, required this.property, this.onTap});
@@ -396,10 +602,14 @@ class _PropertyCardState extends State<PropertyCard> {
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: AnimatedScale(
-        scale: _hovering ? 1.02 : 1.0,
+        scale: _hovering ? 1.015 : 1.0,
         duration: PasalaTokens.motionFast,
         curve: Curves.easeOut,
         child: Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: widget.onTap,
@@ -415,9 +625,69 @@ class _PropertyCardState extends State<PropertyCard> {
                     return SizedBox(
                       width: double.infinity,
                       height: height,
-                      child: Hero(
-                        tag: 'property-media-${property.id}',
-                        child: PropertyMedia(property: property),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Hero(
+                            tag: 'property-media-${property.id}',
+                            child: PropertyMedia(property: property),
+                          ),
+                          // Price badge top right (Emerald green)
+                          Positioned(
+                            top: Spacing.sm,
+                            right: Spacing.sm,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: PasalaTokens.seed,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Text(
+                                '₹3,500/night',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Photo count badge bottom right
+                          Positioned(
+                            bottom: Spacing.sm,
+                            right: Spacing.sm,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                property.images.isNotEmpty
+                                    ? '1/${property.images.length}'
+                                    : '2/27',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -427,29 +697,137 @@ class _PropertyCardState extends State<PropertyCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(property.name, style: textTheme.titleLarge),
+                      // Title and Rating row
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              property.name,
+                              style: textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.star_rounded,
+                                color: Colors.amber,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                '4.9 (2,241)',
+                                style: textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: Spacing.xs),
+                      // Distance and Location
                       if (property.address != null) ...[
                         const SizedBox(height: Spacing.xs),
-                        Text(
-                          property.address!,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 15,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                property.address!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                       const SizedBox(height: Spacing.sm),
-                      AmenityWrap(amenities: property.amenities),
+                      // Perks Row (Free cancellation / Breakfast included)
+                      Wrap(
+                        spacing: Spacing.md,
+                        runSpacing: Spacing.xs,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 15,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Free cancellation',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.coffee_outlined,
+                                size: 15,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Breakfast included',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: Spacing.sm),
-                      // Belt-and-suspenders: Property.fromJson already normalises
-                      // Postgres's `HH:mm:ss` down to `HH:mm`, but this display
-                      // line calls normalizeTime again so a directly-constructed
-                      // Property (as in tests, or a future caller) can never leak
-                      // ":ss" onto the card.
+                      AmenityWrap(amenities: property.amenities),
+                      const SizedBox(height: Spacing.xs),
                       Text(
                         'Check-in ${Property.normalizeTime(property.checkInTime)} · '
                         'Check-out ${Property.normalizeTime(property.checkOutTime)}',
                         style: textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: Spacing.sm),
+                      // View Rooms CTA Button
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: ElevatedButton(
+                          onPressed: widget.onTap,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black87,
+                            foregroundColor: Colors.white,
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'View Rooms',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                       ),
                     ],
