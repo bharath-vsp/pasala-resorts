@@ -49,6 +49,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _demoLogin(String email) async {
+    _email.text = email;
+    _password.text = 'password123';
+    await _submit();
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -121,10 +127,81 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 : null,
                           ),
                           const SizedBox(height: Spacing.lg),
-                          FilledButton(
-                            onPressed: _busy ? null : _submit,
-                            child: const Text('Sign in'),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: _busy ? null : _submit,
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              child: const Text('Sign in'),
+                            ),
                           ),
+                          const SizedBox(height: Spacing.sm),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _busy
+                                  ? null
+                                  : () => _demoLogin('customer@pasala.test'),
+                              icon: const Icon(Icons.explore_outlined, size: 18),
+                              label: const Text('Explore as Guest (Skip Login)'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 13),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: Spacing.md),
+                          Row(
+                            children: const [
+                              Expanded(child: Divider()),
+                              Padding(
+                                padding:
+                                    EdgeInsets.symmetric(horizontal: Spacing.sm),
+                                child: Text(
+                                  'Quick Demo Logins',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                              Expanded(child: Divider()),
+                            ],
+                          ),
+                          const SizedBox(height: Spacing.sm),
+                          Wrap(
+                            spacing: Spacing.xs,
+                            runSpacing: Spacing.xs,
+                            alignment: WrapAlignment.center,
+                            children: [
+                              ActionChip(
+                                avatar: const Icon(Icons.person_outline, size: 16),
+                                label: const Text('Customer'),
+                                onPressed: _busy
+                                    ? null
+                                    : () => _demoLogin('customer@pasala.test'),
+                              ),
+                              ActionChip(
+                                avatar: const Icon(
+                                    Icons.admin_panel_settings_outlined,
+                                    size: 16),
+                                label: const Text('Admin'),
+                                onPressed: _busy
+                                    ? null
+                                    : () => _demoLogin('admin@pasala.test'),
+                              ),
+                              ActionChip(
+                                avatar: const Icon(Icons.military_tech_outlined,
+                                    size: 16),
+                                label: const Text('Super Admin'),
+                                onPressed: _busy
+                                    ? null
+                                    : () => _demoLogin('sa@pasala.test'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: Spacing.sm),
                           TextButton(
                             onPressed: () => context.go('/signup'),
                             child: const Text('Create an account'),
